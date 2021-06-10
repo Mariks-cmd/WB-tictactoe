@@ -1,5 +1,9 @@
 /** @format */
-
+#app {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
 .container {
   display: grid;
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
@@ -21,4 +25,11 @@
 .container a:hover {
   background: rgba(136, 136, 136, 0.623);
   transition: background 1s;
+}
+
+.btn {
+  border: 1px solid grey;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 2em;
 }
