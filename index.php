@@ -5,42 +5,43 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+include 'DataManager.php';
+$data_manager = new DataManager();
 
-//Start
 if (array_key_exists('action', $_GET) && $_GET['action'] == 'reset') {
-    file_put_contents('data.json', '{"table": [], "count": 0}');
+    $data_manager->reset();
 }
 else {
-    $data = getData();
-    $table = $data['table'];
-    $count = $data['count'];
-    $symbol = ($count % 2 == 0) ? 'x' : 'o';
+    $amount = $data_manager->getAmount();
+    $symbol = ($amount % 2 == 0) ? 'x' : 'o';
 
     if (array_key_exists('rid', $_GET) && array_key_exists('cid', $_GET)) {
-        addValue($table, $_GET['rid'], $_GET['cid'], $count, $symbol);
+        $rid = $_GET['rid'];
+        $cid = $_GET['cid'];
+
+        $data_manager->addEntry($rid, $cid, $symbol);
     }
-    validate($table, $symbol);
+
+    $table = $data_manager->getTable();
+    
+    if (checkWinner($table, $symbol)) {
+        echo $symbol . " is a winner!";
+        $data_manager->reset();
+    }
+
 }
-//End
-
-
-
 
 ?>
 
 <div id="app">
     <div class="container">
-        <a href="?rid=1&cid=1"><?=@$table[1][1]; ?></a>
-        <a href="?rid=1&cid=2"><?=@$table[1][2]; ?></a>
-        <a href="?rid=1&cid=3"><?=@$table[1][3]; ?></a>
-
-        <a href="?rid=2&cid=1"><?=@$table[2][1]; ?></a>
-        <a href="?rid=2&cid=2"><?=@$table[2][2]; ?></a>
-        <a href="?rid=2&cid=3"><?=@$table[2][3]; ?></a>
-
-        <a href="?rid=3&cid=1"><?=@$table[3][1]; ?></a>
-        <a href="?rid=3&cid=2"><?=@$table[3][2]; ?></a>
-        <a href="?rid=3&cid=3"><?=@$table[3][3]; ?></a>
+        <?php
+        for ($rid = 1; $rid <= 3; $rid++) {
+            for ($cid = 1; $cid <= 3; $cid++) {
+                echo "<a href='?rid=$rid&cid=$cid'>" . @$table[$rid][$cid] . "</a>";
+            }
+        }
+        ?>
     </div>
 
     <a href="?action=reset" class="btn">Reset</a>
@@ -48,81 +49,34 @@ else {
 
 
 <?php
-    /**
-     * Adds new entry to data.json storage
-     * 
-     * @param array &$table - values of tictactoe
-     * @param integer $rid
-     * @param integer $cid
-     * @param integer $count - count of values in tictactoe
-     * @param string $symbol - 'x' or 'o'
-     */
-    function addValue(&$table, $rid, $cid, $count, $symbol) {
-        if (array_key_exists($rid, $table) && array_key_exists($cid, $table[$rid])) {
-            return;
-        }
-        $table[$rid][$cid] = $symbol;
-        $count = $count + 1;
+    function checkWinner($table, $symbol) {
+        $win_cases = [
+            //rows
+            [[1,1], [1,2], [1,3]],
+            [[2,1], [2,2], [2,3]],
+            [[3,1], [3,2], [3,3]],
+            //columns
+            [[1,1], [2,1], [3,1]],
+            [[1,2], [2,2], [3,2]],
+            [[1,3], [2,3], [3,3]],
+            //dioganal
+            [[1,1], [2,2], [3,3]],
+            [[1,3], [2,2], [3,1]],
+        ];
 
-        $data = json_encode(
-            [
-                "table" => $table,
-                "count" => $count
-            ]
-        , JSON_PRETTY_PRINT);
-        file_put_contents('data.json', $data);
-    }
+        foreach ($win_cases as $case) {
+            $first = $case[0];
+            $second = $case[1];
+            $third = $case[2];
 
-    /**
-     * Gets table values and count
-     * 
-     * @return array ['table' => [...], 'count' => ...]
-     */
-    function getData() {
-        if (file_exists('data.json')) {
-            $data = file_get_contents('data.json');
-            return json_decode($data, true);
+            if ($symbol == @$table[$first[0]][$first[1]] &&
+                $symbol == @$table[$second[0]][$second[1]] &&
+                $symbol == @$table[$third[0]][$third[1]]
+            ) {
+                return true;
+            }
         }
-        return ['table' => [], 'count' => 0];
-    }
 
-    function validate($table, $symbol) {
-        if (
-            (@$table[1][1] == $symbol &&
-            @$table[1][1] == @$table[1][2] &&
-            @$table[1][1] == @$table[1][3])
-            ||
-            (@$table[2][1] == $symbol &&
-            @$table[2][1] == @$table[2][2] &&
-            @$table[2][1] == @$table[2][3])
-            ||
-            (@$table[3][1] == $symbol &&
-            @$table[3][1] == @$table[3][2] &&
-            @$table[3][1] == @$table[3][3])
-            ||
-            (@$table[1][1] == $symbol &&
-            @$table[1][1] == @$table[2][1] &&
-            @$table[1][1] == @$table[3][1])
-            ||
-            (@$table[1][2] == $symbol &&
-            @$table[1][2] == @$table[2][2] &&
-            @$table[1][2] == @$table[3][2])
-            ||
-            (@$table[1][3] == $symbol &&
-            @$table[1][3] == @$table[2][3] &&
-            @$table[1][3] == @$table[3][3])
-            ||
-            (@$table[1][1] == $symbol &&
-            @$table[1][1] == @$table[2][2] &&
-            @$table[1][1] == @$table[3][3])
-            ||
-            (@$table[1][3] == $symbol &&
-            @$table[1][3] == @$table[2][2] &&
-            @$table[1][3] == @$table[3][1])
-        ) {
-            echo $symbol . " is a winner!";
-        }
-        
+        return false;
     }
 ?>
-
