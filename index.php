@@ -5,28 +5,32 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-include 'DataManager.php';
-$data_manager = new DataManager();
+include 'DB.php';
+$db = new DB();
+$tictactoe_obj = $db->makeTableObject('tictactoe');
 
 if (array_key_exists('action', $_GET) && $_GET['action'] == 'reset') {
-    $data_manager->reset();
+    $tictactoe_obj->reset();
 }
 else {
-    $amount = $data_manager->getAmount();
+    $table = &$tictactoe_obj->getTable();
+    $amount = $tictactoe_obj->getAmount();
     $symbol = ($amount % 2 == 0) ? 'x' : 'o';
 
     if (array_key_exists('rid', $_GET) && array_key_exists('cid', $_GET)) {
         $rid = $_GET['rid'];
         $cid = $_GET['cid'];
 
-        $data_manager->addEntry($rid, $cid, $symbol);
+        $tictactoe_obj->addEntry([
+            'row' => $rid,
+            'col' => $cid,
+            'symbol' => $symbol
+        ]);
     }
-
-    $table = $data_manager->getTable();
     
     if (checkWinner($table, $symbol)) {
         echo $symbol . " is a winner!";
-        $data_manager->reset();
+        $tictactoe_obj->reset();
     }
 
 }
