@@ -15,26 +15,12 @@ class Table
         $sql = "SELECT * FROM " . $this->table_name;
         $result = $this->connection->query($sql);
 
-        /*if ($result->num_rows > 0) {
-            //$this->table = $result->fetch_all(MYSQLI_ASSOC);
-        }*/
-
         while ($row = $result->fetch_assoc()) {
             $this->table[$row['row']][$row['col']] = $row['symbol'];
             $this->count++;
         }
 
         return $this->table;
-    }
-
-    public function getEntry(int $id) {
-        $sql = "SELECT * FROM " . $this->table_name . " WHERE id=$id";
-        $result = $this->connection->query($sql);
-
-        if ($result->num_rows > 0) {
-            $row = $result->fetch_assoc();
-            return $row;
-        }
     }
 
     public function addEntry($entry) {
@@ -50,24 +36,6 @@ class Table
         if ($this->connection->query($sql) === TRUE) {
             $this->table[$row][$col] = $symbol;
             $this->count++;
-        } else {
-            echo "Error: " . $sql . "<br>" . $this->connection->error;
-        }
-    }
-
-    public function updateEntry(int $id, $entry) {
-        $allowed_keys = ['name' => null, 'message' => null];
-        $entry = array_intersect_key($entry, $allowed_keys);
-        $name = $this->connection->real_escape_string(@$entry['name']);
-        $message = $this->connection->real_escape_string(@$entry['message']);
-
-        $sql = "UPDATE " . $this->table_name . " SET name='$name', message='$message' WHERE id=$id";
-
-        if ($this->connection->query($sql) === TRUE) {
-            echo "Record ID:$id updated successfully";
-
-            $this->table[$id]['name'] = $name;
-            $this->table[$id]['message'] = $message;
         } else {
             echo "Error: " . $sql . "<br>" . $this->connection->error;
         }
